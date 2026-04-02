@@ -189,20 +189,15 @@ const App = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-10">
               {["Alliance", "Horde"].map((f, fIdx) => (
                 <div key={f} className="space-y-4">
-                  <h3 className={`${f === 'Alliance' ? 'text-blue-400' : 'text-red-500'} font-black uppercase text-xs tracking-widest px-2`}>{f}</h3>
+                  <h3 className={`${f === 'Alliance' ? 'text-blue-400' : 'text-red-500'} font-black uppercase text-xs px-2`}>{f}</h3>
                   {characters.slice(fIdx * 3, fIdx * 3 + matchType).map((c, i) => {
                     const idx = fIdx * 3 + i;
                     return (
-                      <button key={idx} onClick={() => { setActiveSlot(idx); setShowDashboard(false); }} className={`w-full text-left bg-slate-900/60 p-3 rounded-2xl border ${activeSlot === idx ? (f === 'Alliance' ? 'border-blue-500 shadow-blue-900/20' : 'border-red-500 shadow-red-900/20') : 'border-slate-800'} flex items-center gap-4`}>
+                      <button key={idx} onClick={() => { setActiveSlot(idx); setShowDashboard(false); }} className={`w-full text-left bg-slate-900/60 p-3 rounded-2xl border ${activeSlot === idx ? (f === 'Alliance' ? 'border-blue-500' : 'border-red-500') : 'border-slate-800'} flex items-center gap-4`}>
                         <img src={CLASS_ICONS[c.selectedClass]} className="w-12 h-12 object-contain" alt=""/>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex justify-between items-end"><span className="text-sm font-black uppercase text-amber-50">{c.selectedClass}</span><span className="text-[10px] font-bold text-slate-500">Lvl {c.level}</span></div>
-                          <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/5 relative">
-                             <div className="h-full bg-red-600" style={{ width: `${(c.health / c.maxHealth) * 100}%` }} />
-                          </div>
-                          <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/5 relative">
-                             <div className="h-full bg-blue-600" style={{ width: `${(c.energy / c.maxEnergy) * 100}%` }} />
-                          </div>
+                        <div className="flex-1">
+                          <span className="text-sm font-black uppercase text-amber-50">{c.selectedClass}</span>
+                          <div className="text-[7px] text-slate-500 mt-1 italic uppercase line-clamp-1">{FACTION_ABILITIES[c.faction][c.selectedClass]}</div>
                         </div>
                       </button>
                     );
@@ -217,16 +212,15 @@ const App = () => {
       {/* TOP META BAR */}
       <div className="max-w-7xl mx-auto mb-4 flex flex-col gap-3">
         <div className="bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-amber-900/30 flex flex-wrap justify-between items-center shadow-2xl relative overflow-hidden">
-          <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${isAllianceActive ? 'from-blue-600/50' : 'from-red-600/50'} to-transparent`}></div>
           <div className="flex items-center gap-4">
             <div className="flex bg-black/60 rounded-lg p-1 border border-slate-800">
               {[2, 3].map(num => (
-                <button key={num} onClick={() => updateRemote({ matchType: num })} className={`px-3 py-1.5 rounded text-[9px] font-black uppercase ${matchType === num ? 'bg-amber-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{num}vs{num}</button>
+                <button key={num} onClick={() => updateRemote({ matchType: num })} className={`px-3 py-1.5 rounded text-[9px] font-black uppercase ${matchType === num ? 'bg-amber-700 text-white' : 'text-slate-500'}`}>{num}vs{num}</button>
               ))}
             </div>
             <div className="text-center px-4 border-l border-slate-800 font-black text-white text-xl">{gameTurn}</div>
             
-            {/* ACTION MONITOR (RESTORED) */}
+            {/* ACTION MONITOR (QUICK OVERVIEW) */}
             <div className="flex gap-4 items-center border-l border-slate-800 pl-4 bg-black/20 py-1 px-3 rounded-lg">
               {activeTeamIndices.map(idx => (
                 <div key={idx} className={`flex flex-col items-center gap-1 ${activeSlot === idx ? 'opacity-100' : 'opacity-40'}`}>
@@ -240,15 +234,14 @@ const App = () => {
               ))}
             </div>
 
-            <button onClick={() => setShowDashboard(true)} className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-xl border border-slate-700 text-[10px] font-black uppercase hover:bg-slate-700"><LayoutGrid size={14}/> Dashboard</button>
-            <button onClick={() => updateRemote({ gameTurn: gameTurn + 1, characters: characters.map(c => ({...c, actions: 2})) })} className="px-3 py-1.5 bg-amber-700/20 text-amber-500 rounded border border-amber-500/20 text-[9px] font-black uppercase flex items-center gap-2 hover:bg-amber-700/40">Turn <RotateCcw size={12}/></button>
+            <button onClick={() => setShowDashboard(true)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl border border-slate-700 text-[10px] font-black uppercase hover:bg-slate-700">Übersicht</button>
+            <button onClick={() => updateRemote({ gameTurn: gameTurn + 1, characters: characters.map(c => ({...c, actions: 2})) })} className="px-3 py-1.5 bg-amber-700/20 text-amber-500 rounded border border-amber-500/20 text-[9px] font-black uppercase flex items-center gap-2">Turn <RotateCcw size={12}/></button>
           </div>
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 ${isAllianceActive ? 'bg-blue-900/40 border-blue-500/50' : 'bg-red-900/40 border-red-500/50'}`}>
-            <Flag size={14} fill="currentColor" className={isAllianceActive ? 'text-blue-400' : 'text-red-500'}/><span className={`text-[10px] font-black uppercase tracking-widest ${isAllianceActive ? 'text-blue-400' : 'text-red-500'}`}>{isAllianceActive ? 'Allianz' : 'Horde'}</span>
+            <Flag size={14} fill="currentColor" className={isAllianceActive ? 'text-blue-400' : 'text-red-500'}/><span className="text-[10px] font-black uppercase tracking-widest">{isAllianceActive ? 'Allianz' : 'Horde'}</span>
           </div>
         </div>
 
-        {/* TEAM SELECTOR */}
         <div className="grid grid-cols-2 gap-4">
           <div className={`p-1.5 rounded-2xl border bg-blue-900/10 flex gap-2 ${isAllianceActive ? 'border-blue-500/50 shadow-lg' : 'border-blue-900/20'}`}>
              {characters.slice(0, matchType).map((char, i) => (
@@ -276,7 +269,10 @@ const App = () => {
               </div>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-4 font-black text-4xl uppercase text-amber-50 tracking-tighter">
-                  {currentChar.selectedClass}
+                  {/* CLASS SELECTION DROPDOWN (RESTORED) */}
+                  <select value={currentChar.selectedClass} onChange={(e) => handleClassChange(e.target.value)} className="bg-transparent border-none p-0 text-4xl font-black uppercase text-amber-50 outline-none cursor-pointer hover:text-amber-500 transition-colors">
+                    {Object.keys(CLASS_CONFIGS).map(c => <option key={c} value={c} className="bg-slate-900 text-lg">{c}</option>)}
+                  </select>
                   <div className="flex gap-2">
                     {[1, 2].map(i => (
                       <button key={i} onClick={() => updateCurrentChar({ actions: currentChar.actions === i ? i - 1 : i })} className={`w-7 h-7 rounded-full border-2 transition-all ${i <= currentChar.actions ? (currentChar.faction === "Alliance" ? 'bg-blue-500 border-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.4)]' : 'bg-red-500 border-red-300 shadow-[0_0_10px_rgba(239,68,68,0.4)]') : 'bg-slate-800 border-slate-700 opacity-20'}`}/>
@@ -292,12 +288,12 @@ const App = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-black/60 p-4 rounded-2xl border border-amber-900/20 flex flex-col items-center w-24">
+            <div className="bg-black/60 p-4 rounded-2xl border border-amber-900/20 flex flex-col items-center w-24 shadow-inner">
                <Coins size={20} className="text-yellow-500 mb-1.5"/>
                <div className="flex items-center gap-4 font-black text-2xl text-amber-50">
-                 <button onClick={() => updateCurrentChar({gold: Math.max(0, currentChar.gold-1)})} className="text-slate-700 hover:text-white transition-colors">-</button>
+                 <button onClick={() => updateCurrentChar({gold: Math.max(0, currentChar.gold-1)})} className="text-slate-700 hover:text-white">-</button>
                  {currentChar.gold}
-                 <button onClick={() => updateCurrentChar({gold: currentChar.gold+1})} className="text-slate-700 hover:text-white transition-colors">+</button>
+                 <button onClick={() => updateCurrentChar({gold: currentChar.gold+1})} className="text-slate-700 hover:text-white">+</button>
                </div>
             </div>
           </div>
@@ -321,7 +317,6 @@ const App = () => {
             </div>
         </div>
 
-        {/* DETAILS GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-32">
           {/* STATS COLUMN */}
           <div className="lg:col-span-3 space-y-4">
@@ -332,7 +327,7 @@ const App = () => {
                 </h3>
                 <div className="grid grid-cols-5 gap-2">
                   {[...Array(currentChar.maxHealth)].map((_, i) => (
-                    <button key={i} onClick={() => updateCurrentChar({ health: i + 1 })} className={`h-8 rounded-lg transition-all ${i < currentChar.health ? 'bg-gradient-to-br from-red-600 to-red-800 border border-red-400/30' : 'bg-slate-800 opacity-20 hover:opacity-40'}`}/>
+                    <button key={i} onClick={() => updateCurrentChar({ health: i + 1 })} className={`h-8 rounded-lg transition-all ${i < currentChar.health ? 'bg-gradient-to-br from-red-600 to-red-800 border border-red-400/30 shadow-md' : 'bg-slate-800 opacity-20 hover:opacity-40'}`}/>
                   ))}
                 </div>
              </div>
@@ -343,7 +338,7 @@ const App = () => {
                 </h3>
                 <div className="grid grid-cols-5 gap-2">
                   {[...Array(currentChar.maxEnergy)].map((_, i) => (
-                    <button key={i} onClick={() => updateCurrentChar({ energy: i + 1 })} className={`h-8 rounded-lg transition-all ${i < currentChar.energy ? 'bg-gradient-to-br from-blue-600 to-blue-800 border border-blue-400/30' : 'bg-slate-800 opacity-20 hover:opacity-40'}`}/>
+                    <button key={i} onClick={() => updateCurrentChar({ energy: i + 1 })} className={`h-8 rounded-lg transition-all ${i < currentChar.energy ? 'bg-gradient-to-br from-blue-600 to-blue-800 border border-blue-400/30 shadow-md' : 'bg-slate-800 opacity-20 hover:opacity-40'}`}/>
                   ))}
                 </div>
              </div>
@@ -363,7 +358,6 @@ const App = () => {
                   </div>
                 ))}
 
-                {/* REROLLS & BLEED */}
                 <div className="pt-2 border-t border-slate-800 space-y-3">
                   <div className="flex justify-between items-center p-2 rounded-xl bg-amber-900/10 border border-amber-900/20">
                     <span className="text-[9px] font-black uppercase text-amber-500 flex items-center gap-2"><RefreshCcw size={12}/> Wiederholung</span>
@@ -384,9 +378,9 @@ const App = () => {
                 </div>
              </div>
 
-             {/* BAG / TASCHE */}
-             <div className="bg-slate-900/60 p-5 rounded-3xl border border-slate-800 shadow-xl backdrop-blur-sm font-black uppercase">
-                <div className="flex justify-between items-center mb-4 tracking-widest"><h3 className="text-slate-500 text-[10px] flex items-center gap-2"><Backpack size={14}/>Tasche</h3><button onClick={() => updateCurrentChar({ bag: [...(currentChar.bag || []), ""] })} className="text-amber-600 hover:text-amber-400 transition-colors"><Plus size={16}/></button></div>
+             {/* BAG / TASCHE (RESTORED) */}
+             <div className="bg-slate-900/60 p-5 rounded-3xl border border-slate-800 shadow-xl backdrop-blur-sm">
+                <div className="flex justify-between items-center mb-4 tracking-widest font-black"><h3 className="text-slate-500 text-[10px] uppercase flex items-center gap-2"><Backpack size={14}/>Tasche</h3><button onClick={() => updateCurrentChar({ bag: [...(currentChar.bag || []), ""] })} className="text-amber-600 hover:text-amber-400 transition-colors"><Plus size={16}/></button></div>
                 <div className="space-y-1.5 font-bold uppercase text-[10px]">
                   {(currentChar.bag || []).map((item, idx) => (
                     <div key={idx} className="flex gap-1.5 group">

@@ -2,12 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { 
   Heart, Zap, Shield, Plus, Minus, Backpack, Coins, Sparkles, 
   Sword, Flag, RotateCcw, LayoutGrid, X, LogOut, Copy, Check,
-  RefreshCcw, Droplets
+  RefreshCcw, Droplets, Star
 } from 'lucide-react';
 
 // Firebase Imports
 import { db } from './firebase'; 
 import { doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+
+const FACTION_ABILITIES = {
+  "Alliance": {
+    "Krieger": "Schattenhaftigkeit: Zu Beginn der ersten Kampfrunde: Füge 1 blauen Würfel zu deiner Wurfzusammenstellung hinzu.",
+    "Priester": "Steingestalt: Zu Beginn deiner Wurfwiederholung: Du kannst eine gewürfelte 1 oder 2 egal welcher Farbe in eine 3 umwandeln.",
+    "Magier": "Wacher Verstand: Zu Beginn der eigenen Fraktionsspielrunde: Du gewinnst 1 Energie wieder.",
+    "Hexenmeister": "Waffenspezialisierung: Wurfwiederholung +1",
+    "Jäger": "Steingestalt: Zu Beginn deiner Wurfwiederholung: Du kannst eine gewürfelte 1 oder 2 egal welcher Farbe in eine 3 umwandeln.",
+    "Schurke": "Wacher Verstand: Zu Beginn der eigenen Fraktionsspielrunde: Du gewinnst 1 Energie wieder.",
+    "Schamane": "Blutrausch: Blutschaden +1",
+    "Paladin": "Waffenspezialisierung: Wurfwiederholung +1",
+    "Druide": "Schattenhaftigkeit: Zu Beginn der ersten Kampfrunde: Füge 1 blauen Würfel zu deiner Wurfzusammenstellung hinzu."
+  },
+  "Horde": {
+    "Krieger": "Blutrausch: Blutschaden +1",
+    "Priester": "Regeneration: Zu Beginn der eigenen Fraktionsspielrunde: du gewinnst 1 Leben wieder.",
+    "Magier": "Kannibalismus: Nach jedem Kampf, an dem du teilgenommen hast, gewinnst du bis zu 2 Leben wieder, wenn mindestens ein Gegner getötet wurde. Falls du selbst getötet wurdest, kannst du dich nicht auf diese Weise von deinen toten Gegnern nähren.",
+    "Hexenmeister": "Kannibalismus: Nach jedem Kampf, an dem du teilgenommen hast, gewinnst du bis zu 2 Leben wieder, wenn mindestens ein Gegner getötet wurde. Falls du selbst getötet wurdest, kannst du dich nicht auf diese Weise von deinen toten Gegnern nähren.",
+    "Jäger": "Kriegsdonner: Zu Beginn der ersten Kampfrunde: Füge 1 roten Würfel zu deiner Wurfzusammenstellung hinzu.",
+    "Schurke": "Regeneration: Zu Beginn der eigenen Fraktionsspielrunde: du gewinnst 1 Leben wieder.",
+    "Schamane": "Blutrausch: Blutschaden +1",
+    "Paladin": "Waffenspezialisierung: Wurfwiederholung +1",
+    "Druide": "Kriegsdonner: Zu Beginn der ersten Kampfrunde: Füge 1 roten Würfel zu deiner Wurfzusammenstellung hinzu."
+  }
+};
 
 const CLASS_CONFIGS = {
   "Krieger": { slots: ["Aktive Kraft (Kampfhaltung)", "Spontane / Aktive Kraft", "Spontane / Aktive Kraft", "Fernkampf (Bogen/Schuss)", "Nahkampf (Kolben/Schwert)", "Item / Spontane Kraft", "Rüstung (Alle)"], stats: { hp: [4, 6, 8, 11, 14], energy: [1, 2, 3, 4, 5] } },
@@ -151,7 +176,7 @@ const App = () => {
             <div className="flex-grow border-t border-slate-800"></div>
           </div>
           <input type="text" placeholder="CODE EINGEBEN" value={inputGameId} onChange={(e) => setInputGameId(e.target.value.toUpperCase())} className="w-full bg-black/40 border border-slate-800 rounded-xl p-4 mb-4 text-center font-black text-xl text-amber-500 outline-none focus:border-amber-500/50" />
-          <button onClick={() => inputGameId && setGameId(inputGameId)} disabled={!inputGameId} className="w-full py-4 bg-blue-900/40 text-blue-400 border border-blue-500/20 rounded-xl font-black uppercase hover:bg-blue-800/40 disabled:opacity-30">Spiel Beitreten</button>
+          <button onClick={() => inputGameId && setGameId(inputGameId)} disabled={!inputGameId} className="w-full py-4 bg-blue-900/40 text-blue-400 border border-blue-500/20 rounded-xl font-black uppercase hover:bg-blue-800/40 disabled:opacity-30 transition-all">Spiel Beitreten</button>
         </div>
       </div>
     );
@@ -179,10 +204,11 @@ const App = () => {
                     return (
                       <button key={idx} onClick={() => { setActiveSlot(idx); setShowDashboard(false); }} className={`w-full text-left bg-slate-900/60 p-3 rounded-2xl border ${activeSlot === idx ? (f === 'Alliance' ? 'border-blue-500 shadow-blue-900/20' : 'border-red-500 shadow-red-900/20') : 'border-slate-800'} flex items-center gap-4`}>
                         <img src={CLASS_ICONS[c.selectedClass]} className="w-12 h-12 object-contain" alt=""/>
-                        <div className="flex-1 space-y-1.5">
+                        <div className="flex-1 space-y-1">
                           <div className="flex justify-between items-end"><span className="text-sm font-black uppercase text-amber-50">{c.selectedClass}</span><span className="text-[10px] font-bold text-slate-500">Lvl {c.level}</span></div>
                           <StatBar current={c.health} max={c.maxHealth} colorClass="bg-red-600" />
                           <StatBar current={c.energy} max={c.maxEnergy} colorClass="bg-blue-600" />
+                          <div className="text-[7px] text-slate-500 mt-1 italic uppercase line-clamp-1">{FACTION_ABILITIES[c.faction][c.selectedClass]}</div>
                         </div>
                       </button>
                     );
@@ -196,8 +222,7 @@ const App = () => {
 
       {/* TOP META BAR */}
       <div className="max-w-7xl mx-auto mb-4 flex flex-col gap-3">
-        <div className="bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-amber-900/30 flex flex-wrap justify-between items-center shadow-2xl relative overflow-hidden">
-          <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${isAllianceActive ? 'from-blue-600/50' : 'from-red-600/50'} to-transparent`}></div>
+        <div className="bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-amber-900/30 flex flex-wrap justify-between items-center shadow-2xl relative overflow-hidden text-sm uppercase font-black">
           <div className="flex items-center gap-4">
             <div className="flex bg-black/60 rounded-lg p-1 border border-slate-800">
               {[2, 3].map(num => (
@@ -205,11 +230,11 @@ const App = () => {
               ))}
             </div>
             <div className="text-center px-4 border-l border-slate-800 font-black text-white text-xl">{gameTurn}</div>
-            <button onClick={() => setShowDashboard(true)} className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-xl border border-slate-700 text-[10px] font-black uppercase hover:bg-slate-700"><LayoutGrid size={14}/> Dashboard</button>
-            <button onClick={() => updateRemote({ gameTurn: gameTurn + 1, characters: characters.map(c => ({...c, actions: 2})) })} className="px-3 py-1.5 bg-amber-700/20 text-amber-500 rounded border border-amber-500/20 text-[9px] font-black uppercase flex items-center gap-2 hover:bg-amber-700/40 transition-all">Turn <RotateCcw size={12}/></button>
+            <button onClick={() => setShowDashboard(true)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl border border-slate-700 text-[10px] font-black uppercase hover:bg-slate-700">Übersicht</button>
+            <button onClick={() => updateRemote({ gameTurn: gameTurn + 1, characters: characters.map(c => ({...c, actions: 2})) })} className="px-3 py-1.5 bg-amber-700/20 text-amber-500 rounded border border-amber-500/20 text-[9px] font-black uppercase flex items-center gap-2 hover:bg-amber-700/40">Turn <RotateCcw size={12}/></button>
           </div>
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 ${isAllianceActive ? 'bg-blue-900/40 border-blue-500/50 shadow-[0_0_15px_rgba(37,99,235,0.1)]' : 'bg-red-900/40 border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.1)]'}`}>
-            <Flag size={14} fill="currentColor" className={isAllianceActive ? 'text-blue-400' : 'text-red-500'}/><span className={`text-[10px] font-black uppercase tracking-widest ${isAllianceActive ? 'text-blue-400' : 'text-red-500'}`}>{isAllianceActive ? 'Allianz' : 'Horde'}</span>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 ${isAllianceActive ? 'bg-blue-900/40 border-blue-500/50' : 'bg-red-900/40 border-red-500/50'}`}>
+            <Flag size={14} fill="currentColor"/><span className="text-[10px] tracking-widest">{isAllianceActive ? 'Allianz' : 'Horde'}</span>
           </div>
         </div>
 
@@ -230,27 +255,32 @@ const App = () => {
 
       {/* MAIN HERO CARD */}
       <div className="max-w-7xl mx-auto">
-        <div className={`bg-slate-900/90 p-6 rounded-t-3xl border-t border-x ${currentChar.faction === "Alliance" ? 'border-blue-900/50' : 'border-red-900/50'} relative overflow-hidden backdrop-blur-sm`}>
+        <div className={`bg-slate-900/90 p-6 rounded-t-3xl border-t border-x ${currentChar.faction === "Alliance" ? 'border-blue-900/50 shadow-[inset_0_4px_30px_rgba(37,99,235,0.05)]' : 'border-red-900/50 shadow-[inset_0_4px_30px_rgba(220,38,38,0.05)]'} relative overflow-hidden backdrop-blur-sm`}>
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-6">
               <div className="relative">
                 <div className={`w-24 h-24 rounded-full border-4 flex items-center justify-center bg-black/60 overflow-hidden shadow-2xl ${currentChar.faction === "Alliance" ? 'border-blue-500' : 'border-red-500'}`}>
                   <img src={CLASS_ICONS[currentChar.selectedClass]} alt="" className="w-full h-full object-contain p-1.5" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 bg-purple-600 px-2.5 py-1 rounded-lg text-[11px] font-black border border-purple-400">LVL {currentChar.level}</div>
+                <div className="absolute -bottom-1 -right-1 bg-purple-600 px-2.5 py-1 rounded-lg text-[11px] font-black border border-purple-400 shadow-xl">LVL {currentChar.level}</div>
               </div>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-4 font-black text-4xl uppercase text-amber-50 tracking-tighter">
                   {currentChar.selectedClass}
                   <div className="flex gap-2">
                     {[1, 2].map(i => (
-                      <button key={i} onClick={() => updateCurrentChar({ actions: currentChar.actions === i ? i - 1 : i })} className={`w-7 h-7 rounded-full border-2 transition-all ${i <= currentChar.actions ? (currentChar.faction === "Alliance" ? 'bg-blue-500 border-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.4)]' : 'bg-red-500 border-red-300 shadow-[0_0_10px_rgba(239,68,68,0.4)]') : 'bg-slate-800 border-slate-700 opacity-20'}`}/>
+                      <button key={i} onClick={() => updateCurrentChar({ actions: currentChar.actions === i ? i - 1 : i })} className={`w-7 h-7 rounded-full border-2 transition-all ${i <= currentChar.actions ? (currentChar.faction === "Alliance" ? 'bg-blue-500 border-blue-300' : 'bg-red-500 border-red-300') : 'bg-slate-800 border-slate-700 opacity-20'}`}/>
                     ))}
                   </div>
                 </div>
-                <select value={currentChar.selectedClass} onChange={(e) => handleClassChange(e.target.value)} className="bg-slate-800 border border-amber-900/20 text-[11px] font-black py-2 px-4 rounded-xl text-amber-400 outline-none">
-                  {Object.keys(CLASS_CONFIGS).map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                {/* PASSIVE FÄHIGKEIT ANZEIGE */}
+                <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg border border-white/5 max-w-lg">
+                   <Star size={12} fill="#f59e0b" className="text-amber-500 shrink-0"/>
+                   <span className="text-[10px] font-black text-amber-500 uppercase tracking-tighter italic">Passiv:</span>
+                   <span className="text-[10px] font-bold text-slate-300 leading-tight uppercase tracking-tight">
+                     {FACTION_ABILITIES[currentChar.faction][currentChar.selectedClass]}
+                   </span>
+                </div>
               </div>
             </div>
             <div className="bg-black/60 p-4 rounded-2xl border border-amber-900/20 flex flex-col items-center w-24">
@@ -286,25 +316,25 @@ const App = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-32">
           {/* STATS COLUMN */}
           <div className="lg:col-span-3 space-y-4">
-             <div className="bg-slate-900/60 p-5 rounded-3xl border border-red-900/30 shadow-xl backdrop-blur-sm">
-                <h3 className="text-red-500 font-black uppercase text-[10px] mb-4 flex justify-between">
+             <div className="bg-slate-900/60 p-5 rounded-3xl border border-red-900/30 shadow-xl backdrop-blur-sm text-sm font-black">
+                <h3 className="text-red-500 font-black uppercase text-[10px] mb-4 flex justify-between tracking-widest">
                   <div className="flex items-center gap-2"><Heart size={16} fill="#ef4444" className="opacity-70"/>HP</div>
-                  <span className="text-white font-black">{currentChar.health} / {currentChar.maxHealth}</span>
+                  <span className="text-white">{currentChar.health} / {currentChar.maxHealth}</span>
                 </h3>
                 <div className="grid grid-cols-5 gap-2">
                   {[...Array(currentChar.maxHealth)].map((_, i) => (
-                    <button key={i} onClick={() => updateCurrentChar({ health: i + 1 })} className={`h-8 rounded-lg transition-all ${i < currentChar.health ? 'bg-gradient-to-br from-red-600 to-red-800 border border-red-400/30 shadow-md' : 'bg-slate-800 opacity-20'}`}/>
+                    <button key={i} onClick={() => updateCurrentChar({ health: i + 1 })} className={`h-8 rounded-lg transition-all ${i < currentChar.health ? 'bg-gradient-to-br from-red-600 to-red-800 border border-red-400/30' : 'bg-slate-800 opacity-20 hover:opacity-40'}`}/>
                   ))}
                 </div>
              </div>
-             <div className="bg-slate-900/60 p-5 rounded-3xl border border-blue-900/30 shadow-xl backdrop-blur-sm">
-                <h3 className="text-blue-500 font-black uppercase text-[10px] mb-4 flex justify-between">
+             <div className="bg-slate-900/60 p-5 rounded-3xl border border-blue-900/30 shadow-xl backdrop-blur-sm text-sm font-black">
+                <h3 className="text-blue-500 font-black uppercase text-[10px] mb-4 flex justify-between tracking-widest">
                   <div className="flex items-center gap-2"><Zap size={16} fill="#3b82f6" className="opacity-70"/>EP</div>
-                  <span className="text-white font-black">{currentChar.energy} / {currentChar.maxEnergy}</span>
+                  <span className="text-white">{currentChar.energy} / {currentChar.maxEnergy}</span>
                 </h3>
                 <div className="grid grid-cols-5 gap-2">
                   {[...Array(currentChar.maxEnergy)].map((_, i) => (
-                    <button key={i} onClick={() => updateCurrentChar({ energy: i + 1 })} className={`h-8 rounded-lg transition-all ${i < currentChar.energy ? 'bg-gradient-to-br from-blue-600 to-blue-800 border border-blue-400/30 shadow-md' : 'bg-slate-800 opacity-20'}`}/>
+                    <button key={i} onClick={() => updateCurrentChar({ energy: i + 1 })} className={`h-8 rounded-lg transition-all ${i < currentChar.energy ? 'bg-gradient-to-br from-blue-600 to-blue-800 border border-blue-400/30' : 'bg-slate-800 opacity-20 hover:opacity-40'}`}/>
                   ))}
                 </div>
              </div>
@@ -317,29 +347,28 @@ const App = () => {
                       {c === 'red' ? 'Roter Würfel' : c === 'green' ? 'Grüner Würfel' : 'Blauer Würfel'}
                     </span>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => updateCurrentChar({dice: {...currentChar.dice, [c]: Math.max(0, currentChar.dice[c]-1)}})} className="w-7 h-7 bg-slate-800 rounded-lg font-black">-</button>
-                      <span className="text-lg font-black text-white w-5 text-center">{currentChar.dice[c]}</span>
-                      <button onClick={() => updateCurrentChar({dice: {...currentChar.dice, [c]: currentChar.dice[c]+1}})} className="w-7 h-7 bg-slate-800 rounded-lg font-black">+</button>
+                      <button onClick={() => updateCurrentChar({dice: {...currentChar.dice, [c]: Math.max(0, (currentChar.dice[c] || 0)-1)}})} className="w-7 h-7 bg-slate-800 rounded-lg font-black text-slate-400">-</button>
+                      <span className="text-lg font-black text-white w-5 text-center">{currentChar.dice[c] || 0}</span>
+                      <button onClick={() => updateCurrentChar({dice: {...currentChar.dice, [c]: (currentChar.dice[c] || 0)+1}})} className="w-7 h-7 bg-slate-800 rounded-lg font-black text-slate-400">+</button>
                     </div>
                   </div>
                 ))}
 
-                {/* REROLLS & BLEED */}
                 <div className="pt-2 border-t border-slate-800 space-y-3">
                   <div className="flex justify-between items-center p-2 rounded-xl bg-amber-900/10 border border-amber-900/20">
                     <span className="text-[9px] font-black uppercase text-amber-500 flex items-center gap-2"><RefreshCcw size={12}/> Wiederholung</span>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => updateCurrentChar({rerolls: Math.max(0, (currentChar.rerolls || 0) - 1)})} className="w-7 h-7 bg-slate-800 rounded-lg font-black">-</button>
+                      <button onClick={() => updateCurrentChar({rerolls: Math.max(0, (currentChar.rerolls || 0) - 1)})} className="w-7 h-7 bg-slate-800 rounded-lg font-black text-slate-400">-</button>
                       <span className="text-lg font-black text-white w-5 text-center">{currentChar.rerolls || 0}</span>
-                      <button onClick={() => updateCurrentChar({rerolls: (currentChar.rerolls || 0) + 1})} className="w-7 h-7 bg-slate-800 rounded-lg font-black">+</button>
+                      <button onClick={() => updateCurrentChar({rerolls: (currentChar.rerolls || 0) + 1})} className="w-7 h-7 bg-slate-800 rounded-lg font-black text-slate-400">+</button>
                     </div>
                   </div>
                   <div className="flex justify-between items-center p-2 rounded-xl bg-red-900/10 border border-red-900/20">
                     <span className="text-[9px] font-black uppercase text-red-500 flex items-center gap-2"><Droplets size={12}/> Blutschaden</span>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => updateCurrentChar({bleed: Math.max(0, (currentChar.bleed || 0) - 1)})} className="w-7 h-7 bg-slate-800 rounded-lg font-black">-</button>
+                      <button onClick={() => updateCurrentChar({bleed: Math.max(0, (currentChar.bleed || 0) - 1)})} className="w-7 h-7 bg-slate-800 rounded-lg font-black text-slate-400">-</button>
                       <span className="text-lg font-black text-white w-5 text-center">{currentChar.bleed || 0}</span>
-                      <button onClick={() => updateCurrentChar({bleed: (currentChar.bleed || 0) + 1})} className="w-7 h-7 bg-slate-800 rounded-lg font-black">+</button>
+                      <button onClick={() => updateCurrentChar({bleed: (currentChar.bleed || 0) + 1})} className="w-7 h-7 bg-slate-800 rounded-lg font-black text-slate-400">+</button>
                     </div>
                   </div>
                 </div>
@@ -347,12 +376,12 @@ const App = () => {
 
              {/* BAG / TASCHE */}
              <div className="bg-slate-900/60 p-5 rounded-3xl border border-slate-800 shadow-xl backdrop-blur-sm">
-                <div className="flex justify-between items-center mb-4"><h3 className="text-slate-500 font-black uppercase text-[10px] flex items-center gap-2"><Backpack size={14}/>Tasche</h3><button onClick={() => updateCurrentChar({ bag: [...(currentChar.bag || []), ""] })} className="text-amber-600"><Plus size={16}/></button></div>
-                <div className="space-y-1.5">
+                <div className="flex justify-between items-center mb-4 tracking-widest"><h3 className="text-slate-500 font-black text-[10px] uppercase flex items-center gap-2"><Backpack size={14}/>Tasche</h3><button onClick={() => updateCurrentChar({ bag: [...(currentChar.bag || []), ""] })} className="text-amber-600 hover:text-amber-400 transition-colors"><Plus size={16}/></button></div>
+                <div className="space-y-1.5 font-bold uppercase text-[10px]">
                   {(currentChar.bag || []).map((item, idx) => (
                     <div key={idx} className="flex gap-1.5 group">
-                      <input type="text" value={item} onChange={(e) => { const nb = [...currentChar.bag]; nb[idx] = e.target.value; updateCurrentChar({ bag: nb }); }} className="flex-1 bg-black/40 border border-slate-800 rounded p-1.5 text-[10px] font-bold outline-none focus:border-slate-600" placeholder="Gegenstand..."/>
-                      <button onClick={() => updateCurrentChar({ bag: currentChar.bag.filter((_,i) => i !== idx) })} className="text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100"><Minus size={12}/></button>
+                      <input type="text" value={item} onChange={(e) => { const nb = [...currentChar.bag]; nb[idx] = e.target.value; updateCurrentChar({ bag: nb }); }} className="flex-1 bg-black/40 border border-slate-800 rounded p-1.5 text-white outline-none focus:border-slate-600 transition-colors" placeholder="Gegenstand..."/>
+                      <button onClick={() => updateCurrentChar({ bag: currentChar.bag.filter((_,i) => i !== idx) })} className="text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Minus size={12}/></button>
                     </div>
                   ))}
                 </div>
@@ -361,30 +390,30 @@ const App = () => {
 
           {/* EQUIPMENT & TALENTS */}
           <div className="lg:col-span-9 space-y-6">
-            <div className="bg-slate-900/80 p-6 rounded-3xl border border-amber-900/20 shadow-2xl backdrop-blur-sm">
-              <h3 className="text-amber-600/70 font-black uppercase text-[11px] mb-6 underline tracking-widest flex items-center gap-2"><Shield size={16}/>Ausrüstung</h3>
+            <div className="bg-slate-900/80 p-6 rounded-3xl border border-amber-900/20 shadow-2xl backdrop-blur-sm uppercase font-black tracking-widest">
+              <h3 className="text-amber-600 text-[11px] mb-6 underline flex items-center gap-2"><Shield size={16}/>Ausrüstung</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {currentChar.equipment.map((item, idx) => (
                   <div key={idx} className="bg-black/40 rounded-2xl border border-amber-900/10 overflow-hidden shadow-inner group hover:border-amber-600/30 transition-all">
-                    <div className="px-4 py-2 bg-amber-900/10 text-[9px] font-black uppercase text-amber-500/60 tracking-widest">{item.label}</div>
+                    <div className="px-4 py-2 bg-amber-900/10 text-[9px] text-amber-500/60">{item.label}</div>
                     <div className="p-1">
-                      <input type="text" placeholder="Gegenstand..." value={item.name} onChange={(e) => {const ne = [...currentChar.equipment]; ne[idx].name = e.target.value; updateCurrentChar({equipment: ne});}} className="bg-transparent w-full px-4 py-2 text-sm font-bold outline-none text-amber-50"/>
-                      <textarea placeholder="Effekt..." value={item.effect} onChange={(e) => {const ne = [...currentChar.equipment]; ne[idx].effect = e.target.value; updateCurrentChar({equipment: ne});}} className="bg-black/20 w-full p-4 text-[11px] text-slate-400 outline-none min-h-[60px] resize-none border-t border-slate-800/40"/>
+                      <input type="text" placeholder="Name..." value={item.name} onChange={(e) => {const ne = [...currentChar.equipment]; ne[idx].name = e.target.value; updateCurrentChar({equipment: ne});}} className="bg-transparent w-full px-4 py-2 text-sm text-amber-50 outline-none"/>
+                      <textarea placeholder="Effektbeschreibung..." value={item.effect} onChange={(e) => {const ne = [...currentChar.equipment]; ne[idx].effect = e.target.value; updateCurrentChar({equipment: ne});}} className="bg-black/20 w-full p-4 text-[11px] text-slate-400 outline-none min-h-[60px] resize-none border-t border-slate-800/40 normal-case font-medium tracking-normal"/>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-slate-900/80 p-6 rounded-3xl border border-purple-900/20 shadow-2xl backdrop-blur-sm">
-              <h3 className="text-purple-400/70 font-black uppercase text-[11px] mb-6 underline tracking-widest flex items-center gap-2"><Sparkles size={16}/>Talente & Fähigkeiten</h3>
+            <div className="bg-slate-900/80 p-6 rounded-3xl border border-purple-900/20 shadow-2xl backdrop-blur-sm uppercase font-black tracking-widest">
+              <h3 className="text-purple-400 text-[11px] mb-6 underline flex items-center gap-2"><Sparkles size={16}/>Talente & Fähigkeiten</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {currentChar.talents.map((t, idx) => (
                   <div key={idx} className="bg-purple-900/5 rounded-2xl border border-purple-900/10 overflow-hidden hover:border-purple-500/30 transition-all">
-                    <div className="px-4 py-2 bg-purple-900/10 text-[9px] uppercase font-black text-purple-300/70 tracking-tighter">Talent {idx + 1} (Max Stufe {t.maxLvl})</div>
+                    <div className="px-4 py-2 bg-purple-900/10 text-[9px] text-purple-300/70">Talent {idx + 1} (Max Stufe {t.maxLvl})</div>
                     <div className="p-1">
-                      <input type="text" placeholder="Name..." value={t.name} onChange={(e) => {const nt = [...currentChar.talents]; nt[idx].name = e.target.value; updateCurrentChar({talents: nt});}} className="bg-transparent w-full px-4 py-2 font-black outline-none text-purple-100 text-sm"/>
-                      <textarea placeholder="Wirkungsweise..." value={t.effect} onChange={(e) => {const nt = [...currentChar.talents]; nt[idx].effect = e.target.value; updateCurrentChar({talents: nt});}} className="bg-black/40 w-full p-4 text-[11px] text-slate-400 outline-none border-t border-purple-900/10 min-h-[100px] resize-none"/>
+                      <input type="text" placeholder="Name..." value={t.name} onChange={(e) => {const nt = [...currentChar.talents]; nt[idx].name = e.target.value; updateCurrentChar({talents: nt});}} className="bg-transparent w-full px-4 py-2 text-sm text-purple-100 outline-none"/>
+                      <textarea placeholder="Wirkungsweise..." value={t.effect} onChange={(e) => {const nt = [...currentChar.talents]; nt[idx].effect = e.target.value; updateCurrentChar({talents: nt});}} className="bg-black/40 w-full p-4 text-[11px] text-slate-400 outline-none border-t border-purple-900/10 min-h-[100px] resize-none normal-case font-medium tracking-normal"/>
                     </div>
                   </div>
                 ))}
@@ -397,13 +426,13 @@ const App = () => {
         <div className="fixed bottom-6 left-6 right-6 max-w-7xl mx-auto flex justify-between items-center bg-slate-900/95 backdrop-blur-xl p-4 rounded-3xl border border-amber-900/30 shadow-2xl z-50">
            <div className="flex gap-4">
               <div className="flex items-center gap-2 px-6 py-3 bg-black/60 rounded-2xl border border-slate-800">
-                <span className="text-[10px] font-black text-slate-500 uppercase">Spiel-ID:</span>
-                <span className="text-amber-500 font-black text-lg font-mono">{gameId}</span>
-                <button onClick={() => {navigator.clipboard.writeText(gameId); setCopied(true); setTimeout(() => setCopied(false), 2000);}} className={`ml-2 p-2 rounded-lg transition-all ${copied ? 'text-emerald-500' : 'text-slate-400 hover:text-white'}`}>{copied ? <Check size={16}/> : <Copy size={16}/>}</button>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Spiel-ID:</span>
+                <span className="text-amber-500 font-black text-lg font-mono tracking-[0.2em]">{gameId}</span>
+                <button onClick={() => {navigator.clipboard.writeText(gameId); setCopied(true); setTimeout(() => setCopied(false), 2000);}} className={`ml-2 p-2 rounded-lg transition-all ${copied ? 'text-emerald-500 bg-emerald-500/10' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>{copied ? <Check size={16}/> : <Copy size={16}/>}</button>
               </div>
-              <button onClick={() => {if(window.confirm("Spiel verlassen?")) { setGameId(null); localStorage.removeItem('wow_last_game'); }}} className="flex items-center gap-2 px-6 py-3 bg-red-900/20 text-red-500 rounded-2xl border border-red-500/20 text-[10px] font-black uppercase hover:bg-red-900/40"><LogOut size={16}/> Beenden</button>
+              <button onClick={() => {if(window.confirm("Spiel verlassen?")) { setGameId(null); localStorage.removeItem('wow_last_game'); }}} className="flex items-center gap-2 px-6 py-3 bg-red-900/20 text-red-500 rounded-2xl border border-red-500/20 text-[10px] font-black uppercase hover:bg-red-900/40 transition-all"><LogOut size={16}/> Beenden</button>
            </div>
-           <div className="hidden sm:block text-[9px] font-black text-slate-700 uppercase tracking-[0.5em]">Battle Assistant v15.1 Cloud</div>
+           <div className="hidden sm:block text-[9px] font-black text-slate-700 uppercase tracking-[0.5em]">Battle Assistant v15.2 Cloud</div>
         </div>
       </div>
     </div>

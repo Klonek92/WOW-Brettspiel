@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Heart, Zap, Shield, Plus, Minus, Backpack, Coins, Sparkles, 
-  Download, Upload, Sword, Flag, RotateCcw, LayoutGrid, X, LogOut, Copy, Check,
+  Sword, Flag, RotateCcw, LayoutGrid, X, LogOut, Copy, Check,
   RefreshCcw, Droplets
 } from 'lucide-react';
 
@@ -147,7 +147,7 @@ const App = () => {
           <button onClick={createGame} className="w-full mt-8 py-4 bg-amber-700 hover:bg-amber-600 text-white rounded-xl font-black uppercase transition-all shadow-lg active:scale-95">Neues Spiel</button>
           <div className="w-full flex items-center py-6">
             <div className="flex-grow border-t border-slate-800"></div>
-            <span className="px-4 text-[9px] font-black text-slate-600 uppercase">oder beitreten</span>
+            <span className="px-4 text-[9px] font-black text-slate-600 uppercase tracking-widest">oder beitreten</span>
             <div className="flex-grow border-t border-slate-800"></div>
           </div>
           <input type="text" placeholder="CODE EINGEBEN" value={inputGameId} onChange={(e) => setInputGameId(e.target.value.toUpperCase())} className="w-full bg-black/40 border border-slate-800 rounded-xl p-4 mb-4 text-center font-black text-xl text-amber-500 outline-none focus:border-amber-500/50" />
@@ -206,9 +206,9 @@ const App = () => {
             </div>
             <div className="text-center px-4 border-l border-slate-800 font-black text-white text-xl">{gameTurn}</div>
             <button onClick={() => setShowDashboard(true)} className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-xl border border-slate-700 text-[10px] font-black uppercase hover:bg-slate-700"><LayoutGrid size={14}/> Dashboard</button>
-            <button onClick={() => updateRemote({ gameTurn: gameTurn + 1, characters: characters.map(c => ({...c, actions: 2})) })} className="px-3 py-1.5 bg-amber-700/20 text-amber-500 rounded border border-amber-500/20 text-[9px] font-black uppercase flex items-center gap-2 hover:bg-amber-700/40">Turn <RotateCcw size={12}/></button>
+            <button onClick={() => updateRemote({ gameTurn: gameTurn + 1, characters: characters.map(c => ({...c, actions: 2})) })} className="px-3 py-1.5 bg-amber-700/20 text-amber-500 rounded border border-amber-500/20 text-[9px] font-black uppercase flex items-center gap-2 hover:bg-amber-700/40 transition-all">Turn <RotateCcw size={12}/></button>
           </div>
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 ${isAllianceActive ? 'bg-blue-900/40 border-blue-500/50' : 'bg-red-900/40 border-red-500/50'}`}>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 ${isAllianceActive ? 'bg-blue-900/40 border-blue-500/50 shadow-[0_0_15px_rgba(37,99,235,0.1)]' : 'bg-red-900/40 border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.1)]'}`}>
             <Flag size={14} fill="currentColor" className={isAllianceActive ? 'text-blue-400' : 'text-red-500'}/><span className={`text-[10px] font-black uppercase tracking-widest ${isAllianceActive ? 'text-blue-400' : 'text-red-500'}`}>{isAllianceActive ? 'Allianz' : 'Horde'}</span>
           </div>
         </div>
@@ -313,7 +313,9 @@ const App = () => {
              <div className="bg-slate-900/60 p-5 rounded-3xl border border-slate-800 space-y-3 shadow-xl backdrop-blur-sm">
                 {['red', 'green', 'blue'].map(c => (
                   <div key={c} className="flex justify-between items-center p-2 rounded-xl bg-black/40 border border-slate-800">
-                    <span className={`text-[9px] font-black uppercase ${c === 'red' ? 'text-red-400' : c === 'green' ? 'text-green-400' : 'text-blue-400'}`}>{c === 'red' ? 'Kraft' : c === 'green' ? 'Tempo' : 'Magie'}</span>
+                    <span className={`text-[9px] font-black uppercase ${c === 'red' ? 'text-red-400' : c === 'green' ? 'text-green-400' : 'text-blue-400'}`}>
+                      {c === 'red' ? 'Roter Würfel' : c === 'green' ? 'Grüner Würfel' : 'Blauer Würfel'}
+                    </span>
                     <div className="flex items-center gap-3">
                       <button onClick={() => updateCurrentChar({dice: {...currentChar.dice, [c]: Math.max(0, currentChar.dice[c]-1)}})} className="w-7 h-7 bg-slate-800 rounded-lg font-black">-</button>
                       <span className="text-lg font-black text-white w-5 text-center">{currentChar.dice[c]}</span>
@@ -322,7 +324,7 @@ const App = () => {
                   </div>
                 ))}
 
-                {/* NEW: REROLLS & BLEED */}
+                {/* REROLLS & BLEED */}
                 <div className="pt-2 border-t border-slate-800 space-y-3">
                   <div className="flex justify-between items-center p-2 rounded-xl bg-amber-900/10 border border-amber-900/20">
                     <span className="text-[9px] font-black uppercase text-amber-500 flex items-center gap-2"><RefreshCcw size={12}/> Wiederholung</span>
@@ -343,7 +345,7 @@ const App = () => {
                 </div>
              </div>
 
-             {/* RESTORED: BAG / TASCHE */}
+             {/* BAG / TASCHE */}
              <div className="bg-slate-900/60 p-5 rounded-3xl border border-slate-800 shadow-xl backdrop-blur-sm">
                 <div className="flex justify-between items-center mb-4"><h3 className="text-slate-500 font-black uppercase text-[10px] flex items-center gap-2"><Backpack size={14}/>Tasche</h3><button onClick={() => updateCurrentChar({ bag: [...(currentChar.bag || []), ""] })} className="text-amber-600"><Plus size={16}/></button></div>
                 <div className="space-y-1.5">
@@ -397,11 +399,11 @@ const App = () => {
               <div className="flex items-center gap-2 px-6 py-3 bg-black/60 rounded-2xl border border-slate-800">
                 <span className="text-[10px] font-black text-slate-500 uppercase">Spiel-ID:</span>
                 <span className="text-amber-500 font-black text-lg font-mono">{gameId}</span>
-                <button onClick={() => {navigator.clipboard.writeText(gameId); setCopied(true); setTimeout(() => setCopied(false), 2000);}} className={`ml-2 p-2 rounded-lg ${copied ? 'text-emerald-500' : 'text-slate-400 hover:text-white'}`}>{copied ? <Check size={16}/> : <Copy size={16}/>}</button>
+                <button onClick={() => {navigator.clipboard.writeText(gameId); setCopied(true); setTimeout(() => setCopied(false), 2000);}} className={`ml-2 p-2 rounded-lg transition-all ${copied ? 'text-emerald-500' : 'text-slate-400 hover:text-white'}`}>{copied ? <Check size={16}/> : <Copy size={16}/>}</button>
               </div>
               <button onClick={() => {if(window.confirm("Spiel verlassen?")) { setGameId(null); localStorage.removeItem('wow_last_game'); }}} className="flex items-center gap-2 px-6 py-3 bg-red-900/20 text-red-500 rounded-2xl border border-red-500/20 text-[10px] font-black uppercase hover:bg-red-900/40"><LogOut size={16}/> Beenden</button>
            </div>
-           <div className="hidden sm:block text-[9px] font-black text-slate-700 uppercase tracking-[0.5em]">Battle Assistant v15.1</div>
+           <div className="hidden sm:block text-[9px] font-black text-slate-700 uppercase tracking-[0.5em]">Battle Assistant v15.1 Cloud</div>
         </div>
       </div>
     </div>
